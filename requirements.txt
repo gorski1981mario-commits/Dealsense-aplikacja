@@ -1,0 +1,5 @@
+flask
+gunicorn
+# Voeg hier andere bibliotheken toe die je gebruikt, bijv:
+# requests
+# pandas
