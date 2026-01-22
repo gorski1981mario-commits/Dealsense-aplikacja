@@ -2,10 +2,14 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import openai
 
 app = FastAPI()
 
-# Kluczowe dla wtyczki Chrome: pozwala na połączenie
+# Dit zorgt ervoor dat de AI je geheime sleutel gebruikt die je net bij Render hebt ingevuld
+client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
+# Zorgt dat je Chrome-extensie verbinding mag maken
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,21 +19,21 @@ app.add_middleware(
 
 @app.get("/")
 def home():
-    return {"status": "DealSense Online", "message": "System Bodyguarda gotowy"}
+    return {"status": "DealSense AI is LIVE", "message": "Klaar om te besparen!"}
 
 @app.get("/analyze")
-async def analyze(url: str, ean: str = "brak"):
-    # Tutaj AI Agentic (GPT-4o Vision) będzie analizować cenę
-    return {
-        "status": "success",
-        "ean": ean,
-        "recommendation": "CZEKAJ - cena spadnie o 10% w poniedziałek",
-        "best_price": 45.99,
-        "stripe_url": "https://buy.stripe.com"
-    }
+async def analyze_product(url: str):
+    try:
+        # De Agentic AI gaat nu naar de pagina kijken
+        response = client.chat.completions.create(
+            model="gpt-4o", # De nieuwste versie voor 2026
+            messages=[
+                {"role": "system", "content": "Je bent de DealSense bodyguard. Zoek de prijs en de EAN code op de pagina. Antwoord alleen in JSON formaat: {'price': 0.0, 'ean': 'code'}"},
+                {"role": "user", "content": f"Scan deze pagina: {url}"}
+            ],
+            response_format={ "type": "json_object" }
+        )
+        return {"status": "success", "data": response.choices[0].message.content}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
-if __name__ == "__main__":
-    import uvicorn
-    # Render wymaga dynamicznego portu
-    port = int(os.environ.get("PORT", 10000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
